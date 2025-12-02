@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VDTv — Movie Explorer</title>
+
+  <style>
+    :root{
+      --accent:#e50914;
+      --muted:#bdbdbd;
+    }
+
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      font-family: Inter, "Segoe UI", system-ui;
+      background:
+        linear-gradient(rgba(0,0,0,0.70), rgba(0,0,0,0.85)),
+        url("https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?auto=format&fit=crop&w=2100&q=80");
+      background-size:cover;
+      background-position:center;
+      background-attachment:fixed;
+      color:white;
+      min-height:100vh;
+    }
+
+    /* HEADER */
+    header{
+      display:flex;
+      align-items:center;
+      padding:18px 30px;
+      gap:20px;
+    }
+
+    .logo{
+      font-weight:800;
+      font-size:26px;
+      color:var(--accent);
+      letter-spacing:1px;
+    }
+
+    .search-wrap{
+      flex:1;
+      display:flex;
+      justify-content:flex-end;
+    }
+
+    .search{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background:#151515cc;
+      padding:10px;
+      border-radius:10px;
+      border:1px solid #222;
+      width:100%;
+      max-width:900px;
+    }
+
+    input[type="search"]{
+      background:transparent;
+      border:none;
+      outline:none;
+      color:white;
+      font-size:15px;
+      width:100%;
+    }
+
+    button.primary{
+      background:var(--accent);
+      color:white;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      cursor:pointer;
+      font-weight:600;
+      transition:0.2s;
+    }
+    button.primary:hover{background:#f40612;}
+
+    /* MAIN */
+    main{
+      padding:22px 30px;
+    }
+
+    h2.section-title{
+      margin:6px 0 12px 0;
+    }
+
+    /* GENRE CHIPS */
+    .genres{
+      display:flex;
+      gap:10px;
+      padding:10px 0;
+      margin-bottom:20px;
+      overflow-x:auto;
+    }
+
+    .genre-chip{
+      background:#1a1a1acc;
+      border:1px solid #333;
+      padding:8px 14px;
+      border-radius:999px;
+      cursor:pointer;
+      white-space:nowrap;
+      transition:0.2s;
+    }
+    .genre-chip.active{ background:var(--accent); color:white; }
+
+    /* ROWS */
+    .row{ margin-bottom:30px; }
+
+    .row-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .row-title{
+      font-size:20px;
+      font-weight:700;
+    }
+
+    .row-scroller{
+      display:flex;
+      gap:14px;
+      overflow-x:auto;
+      padding-bottom:10px;
+      scroll-behavior:smooth;
+    }
+
+    .row-scroller::-webkit-scrollbar{ height:10px; }
+    .row-scroller::-webkit-scrollbar-thumb{
+      background:#333;
+      border-radius:6px;
+    }
+
+    /* CARDS */
+    .card{
+      min-width:150px;
+      width:150px;
+      background:#0e0e0ecc;
+      border-radius:10px;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.08);
+      box-shadow:0 8px 30px rgba(0,0,0,0.75);
+      cursor:pointer;
+      transition:0.2s;
+    }
+    .card:hover{ transform:scale(1.05); }
+
+    .card img{
+      width:100%;
+      height:225px;
+      object-fit:cover;
+      display:block;
+    }
+
+    .card .meta{
+      padding:8px;
+      font-size:13px;
+    }
+
+    .card .title{
+      font-weight:700;
+      margin-bottom:6px;
+    }
+
+    .card .info{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .shimmer{
+      height:225px;
+      background:linear-gradient(90deg,#111 0%, #222 40%, #111 80%);
+      background-size:200% 100%;
+      animation:shimmer 1s linear infinite;
+    }
+    @keyframes shimmer{
+      0%{background-position:200% 0;}
+      100%{background-position:-200% 0;}
+    }
+
+    .empty{
+      text-align:center;
+      color:var(--muted);
+      padding:20px;
+    }
+
+    /* MODAL */
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,0.75);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:99;
+    }
+
+    .modal{
+      background:#0d0d0d;
+      width:90%;
+      max-width:900px;
+      border-radius:12px;
+      display:flex;
+      overflow:hidden;
+      box-shadow:0 0 40px black;
+    }
+
+    .modal .left{
+      width:40%;
+      background:black;
+    }
+    .modal .left img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+
+    .modal .right{
+      padding:20px;
+      flex:1;
+    }
+
+    .close-btn{
+      background:#222;
+      color:white;
+      padding:8px 12px;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+
+    #modalCast{
+      margin-top:10px;
+      font-size:14px;
+      color:#d0d0d0;
+      line-height:1.4;
+    }
+
+    @media(max-width:770px){
+      .modal{ flex-direction:column; }
+      .modal .left{
+        width:100%;
+        height:300px;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">VDTv</div>
+
+    <div class="search-wrap">
+      <div class="search">
+        <input id="searchInput" list="titlesList" placeholder="Search movies..." type="search" />
+        <datalist id="titlesList"></datalist>
+        <button class="primary" id="goBtn">Recommend</button>
+      </div>
+    </div>
+  </header>
+
+
+  <main>
+
+    <!-- Genre Chips -->
+    <div id="genres" class="genres"></div>
+
+    <!-- Trending -->
+    <div class="row">
+      <div class="row-header">
+        <div class="row-title">Trending This Week</div>
+        <div id="trendingStatus" style="color:var(--muted);font-size:13px">Loading...</div>
+      </div>
+      <div id="trendingScroller" class="row-scroller"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="row" id="recommendRow" style="display:none;">
+      <div class="row-header">
+        <div class="row-title">Recommended For You</div>
+        <div id="recommendStatus" style="color:var(--muted);font-size:13px"></div>
+      </div>
+      <div id="recommendScroller" class="row-scroller"></div>
+    </div>
+
+  </main>
+
+
+  <!-- Modal -->
+  <div id="modalBackdrop" class="modal-backdrop">
+    <div class="modal">
+      <div class="left">
+        <img id="modalPoster" src="">
+      </div>
+      <div class="right">
+
+        <div style="display:flex; justify-content:space-between;">
+          <div>
+            <div id="modalTitle" class="title" style="font-size:20px; font-weight:800;"></div>
+            <div id="modalMeta" style="color:var(--muted); margin-top:4px;"></div>
+          </div>
+
+          <button id="closeModal" class="close-btn">Close</button>
+        </div>
+
+        <div id="modalOverview" style="margin-top:14px; line-height:1.5;"></div>
+        <div id="modalCast"></div>
+
+      </div>
+    </div>
+  </div>
+
+
+
+<!-- SCRIPT -->
+<script>
+const API_BASE = "http://127.0.0.1:5001";
+let trendingPage = 1, trendingTotalPages = 1, trendingLoading = false;
+let genrePages = {};
+
+
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+
+function makeCard(item){
+  const el = document.createElement("div");
+  el.className = "card";
+  el.innerHTML = `
+    <img src="${item.poster}">
+    <div class="meta">
+      <div class="title">${escapeHtml(item.title)}</div>
+      <div class="info">${item.vote_average ? "⭐ "+item.vote_average+" • " : ""}${item.release_date ? item.release_date.split("-")[0] : ""}</div>
+    </div>
+  `;
+  el.addEventListener("click", ()=>openDetails(item));
+  return el;
+}
+
+
+async function fetchTitles(){
+  try{
+    const r=await fetch(`${API_BASE}/titles`);
+    const j=await r.json();
+    let list=j.titles||[];
+    const dl=document.getElementById("titlesList");
+    dl.innerHTML="";
+    list.slice(0,6000).forEach(t=>{
+      let opt=document.createElement("option");
+      opt.value=t; dl.appendChild(opt);
+    });
+  }catch(e){console.error(e);}
+}
+
+
+async function loadGenres(){
+  try{
+    const r=await fetch(`${API_BASE}/genres`);
+    const j=await r.json();
+    const arr=j.genres||[];
+    const g=document.getElementById("genres");
+    arr.forEach(x=>{
+      let chip=document.createElement("div");
+      chip.className="genre-chip";
+      chip.textContent=x.name;
+      chip.dataset.id=x.id;
+      chip.onclick=()=>loadGenre(x.id,x.name,chip);
+      g.appendChild(chip);
+    });
+  }catch{
+    document.getElementById("genres").style.display="none";
+  }
+}
+
+
+// TRENDING
+async function loadTrending(page=1){
+  if(trendingLoading) return;
+  trendingLoading=true;
+
+  let scroller=document.getElementById("trendingScroller");
+  if(page===1){
+    scroller.innerHTML="";
+    for(let i=0;i<8;i++){
+      let s=document.createElement("div");
+      s.className="card";
+      s.innerHTML=`<div class="shimmer"></div>`;
+      scroller.appendChild(s);
+    }
+  }
+
+  try{
+    const r=await fetch(`${API_BASE}/trending?page=${page}`);
+    const j=await r.json();
+    trendingTotalPages=j.total_pages||1;
+
+    if(page===1) scroller.innerHTML="";
+    j.results.forEach(it=>scroller.appendChild(makeCard(it)));
+
+    document.getElementById("trendingStatus").textContent = `Page ${page} of ${trendingTotalPages}`;
+  }catch(e){
+    document.getElementById("trendingStatus").textContent="Error loading trending";
+  }
+
+  trendingLoading=false;
+}
+
+
+// infinite scroll
+document.getElementById("trendingScroller").addEventListener("scroll", ()=>{
+  let s=document.getElementById("trendingScroller");
+  if(s.scrollLeft+s.clientWidth>=s.scrollWidth-150){
+    if(!trendingLoading && trendingPage<trendingTotalPages){
+      trendingPage++;
+      loadTrending(trendingPage);
+    }
+  }
+});
+
+
+// GENRE ROWS
+async function loadGenre(id,name,chip){
+  document.querySelectorAll(".genre-chip").forEach(c=>c.classList.remove("active"));
+  chip.classList.add("active");
+
+  let rowId="genreRow_"+id;
+  let existing=document.getElementById(rowId);
+
+  if(existing){
+    existing.scrollIntoView({behavior:"smooth"});
+    return;
+  }
+
+  let main=document.querySelector("main");
+  let row=document.createElement("div");
+  row.className="row";
+  row.id=rowId;
+  row.innerHTML=`
+    <div class="row-header">
+      <div class="row-title">${escapeHtml(name)}</div>
+      <div style="color:var(--muted);font-size:13px">Loading...</div>
+    </div>
+    <div id="genreScroller_${id}" class="row-scroller"></div>
+  `;
+  main.appendChild(row);
+
+  let scroller=document.getElementById(`genreScroller_${id}`);
+
+  for(let i=0;i<8;i++){
+    let s=document.createElement("div");
+    s.className="card";
+    s.innerHTML=`<div class="shimmer"></div>`;
+    scroller.appendChild(s);
+  }
+
+  try{
+    const r=await fetch(`${API_BASE}/genre_movies?genre_id=${id}&page=1`);
+    const j=await r.json();
+
+    scroller.innerHTML="";
+    j.results.forEach(it=>scroller.appendChild(makeCard(it)));
+
+    genrePages[id]=1;
+
+    scroller.addEventListener("scroll", async ()=>{
+      if(scroller.scrollLeft+scroller.clientWidth>=scroller.scrollWidth-150){
+        let next=genrePages[id]+1;
+        if(next<=j.total_pages){
+          genrePages[id]=next;
+          const r2=await fetch(`${API_BASE}/genre_movies?genre_id=${id}&page=${next}`);
+          const j2=await r2.json();
+          j2.results.forEach(it=>scroller.appendChild(makeCard(it)));
+        }
+      }
+    });
+
+  }catch(e){
+    scroller.innerHTML=`<div class="empty">Error loading genre</div>`;
+  }
+}
+
+
+
+// RECOMMENDATION
+async function doRecommend(){
+  let q=document.getElementById("searchInput").value.trim();
+  if(!q){ alert("Enter a movie title"); return; }
+
+  let row=document.getElementById("recommendRow");
+  let scroller=document.getElementById("recommendScroller");
+  let status=document.getElementById("recommendStatus");
+
+  row.style.display="block";
+  scroller.innerHTML="";
+  status.textContent="Searching…";
+
+  for(let i=0;i<6;i++){
+    let s=document.createElement("div");
+    s.className="card";
+    s.innerHTML=`<div class="shimmer"></div>`;
+    scroller.appendChild(s);
+  }
+
+  try{
+    const r=await fetch(`${API_BASE}/recommend`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({title:q})
+    });
+
+    const j=await r.json();
+    scroller.innerHTML="";
+
+    if(j.error){ status.textContent=j.error; return; }
+
+    status.textContent=`Results for "${j.query}"`;
+    j.recommendations.forEach(it=>scroller.appendChild(makeCard(it)));
+
+  }catch{
+    status.textContent="Network error.";
+  }
+}
+
+
+
+// OPEN DETAILS MODAL
+async function openDetails(item){
+  const backdrop=document.getElementById("modalBackdrop");
+  const poster=document.getElementById("modalPoster");
+  const title=document.getElementById("modalTitle");
+  const meta=document.getElementById("modalMeta");
+  const overview=document.getElementById("modalOverview");
+  const cast=document.getElementById("modalCast");
+
+  poster.src=item.poster;
+  title.textContent=item.title;
+  meta.textContent="Loading details…";
+  overview.textContent="";
+  cast.textContent="Cast: loading…";
+
+  backdrop.style.display="flex";
+
+  try{
+    let url = `${API_BASE}/movie_details?`;
+    if(item.tmdb_id) url += `tmdb_id=${item.tmdb_id}`;
+    else url += `title=${encodeURIComponent(item.title)}`;
+
+    const r=await fetch(url);
+    const j=await r.json();
+
+    if(j.error){
+      meta.textContent="";
+      overview.textContent="No details available.";
+      cast.textContent="";
+      return;
+    }
+
+    poster.src=j.poster;
+    title.textContent=j.title;
+    meta.textContent=`⭐ ${j.rating||""} • ${j.release_date?j.release_date.split("-")[0]:""} • ${j.runtime||""} min`;
+    overview.textContent=j.overview||"No overview available.";
+    cast.textContent="Cast: "+ (j.cast && j.cast.length? j.cast.join(", ") : "Not available");
+
+  }catch{
+    meta.textContent="";
+    overview.textContent="Failed to load details.";
+    cast.textContent="";
+  }
+}
+
+
+
+// CLOSE MODAL
+document.getElementById("closeModal").addEventListener("click", ()=>{
+  document.getElementById("modalBackdrop").style.display="none";
+});
+
+document.getElementById("modalBackdrop").addEventListener("click", (e)=>{
+  if(e.target.id==="modalBackdrop"){
+    document.getElementById("modalBackdrop").style.display="none";
+  }
+});
+
+
+// EVENT LISTENERS
+document.getElementById("goBtn").addEventListener("click",doRecommend);
+document.getElementById("searchInput").addEventListener("keydown",(e)=>{
+  if(e.key==="Enter") doRecommend();
+});
+
+
+// INIT
+(async function(){
+  fetchTitles();
+  loadGenres();
+  loadTrending(1);
+})();
+</script>
+
+</body>
+</html>
