@@ -98,6 +98,8 @@ http://127.0.0.1:5001
 
 Update this URL in `index.html` when deploying the project.
 
+video:- https://drive.google.com/drive/folders/1Vbgb6jC_UWqE-v404QCkYhrD2OjyLPuC?usp=share_link
+
 ---
 
 ## Future Enhancements
